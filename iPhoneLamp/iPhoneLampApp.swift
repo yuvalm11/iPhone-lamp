@@ -1,17 +1,17 @@
-//
-//  iPhoneLampApp.swift
-//  iPhoneLamp
-//
-//  Created by Yuval Mamana on 15/12/2025.
-//
-
 import SwiftUI
 
 @main
-struct iPhoneLampApp: App {
+struct IPhoneLampApp: App {
+    private let viewModel = LampViewModel(
+        service: ESP32Service(
+            baseURL: URL(string: "http://192.168.4.1")! // Update to match your ESP32 IP
+        )
+    )
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(viewModel: viewModel)
         }
     }
 }
+
