@@ -1,0 +1,17 @@
+iPhoneLamp.xcodeproj/
+
+# Xcode user data
+**/xcuserdata/
+**/*.xcuserstate
+
+# Build products
+DerivedData/
+build/
+
+# SwiftPM
+.build/
+
+# macOS
+.DS_Store
+
+
