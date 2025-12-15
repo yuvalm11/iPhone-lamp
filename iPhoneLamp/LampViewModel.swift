@@ -1,46 +1,47 @@
 import SwiftUI
+import Combine
+import UIKit
 
-struct ColorChoice: Identifiable, Equatable {
-    let id = UUID()
-    let name: String
-    let color: Color
-    let rgb: (Int, Int, Int)
-}
-
-@MainActor
 final class LampViewModel: ObservableObject {
     @Published var intensity: Double = 0.6
     @Published var statusMessage: String = "Ready"
-    @Published var selectedColor: ColorChoice
+    @Published var selectedColor: Color = .orange
     @Published var isSending: Bool = false
-
-    let colors: [ColorChoice] = [
-        ColorChoice(name: "Warm", color: .orange, rgb: (255, 184, 144)),
-        ColorChoice(name: "Cool", color: .cyan, rgb: (170, 210, 255)),
-        ColorChoice(name: "Red", color: .red, rgb: (255, 64, 64)),
-        ColorChoice(name: "Green", color: .green, rgb: (80, 200, 120)),
-        ColorChoice(name: "Blue", color: .blue, rgb: (96, 140, 255))
-    ]
 
     private let service: ESP32Service
 
     init(service: ESP32Service) {
         self.service = service
-        self.selectedColor = colors.first!
     }
 
     func turnOn() {
-        send(label: "Power On") { try await service.turnOn() }
+        send(label: "Power On") { try await self.service.turnOn() }
     }
 
     func turnOff() {
-        send(label: "Power Off") { try await service.turnOff() }
+        send(label: "Power Off") { try await self.service.turnOff() }
     }
 
-    func applyColor(_ choice: ColorChoice) {
-        selectedColor = choice
-        send(label: "Color \(choice.name)") {
-            try await service.setColor(r: choice.rgb.0, g: choice.rgb.1, b: choice.rgb.2)
+    func applySelectedColor() {
+        let color = selectedColor
+
+        let uiColor = UIColor(color)
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+
+        guard uiColor.getRed(&r, green: &g, blue: &b, alpha: &a) else {
+            statusMessage = "Failed to read color components"
+            return
+        }
+
+        let red = Int(r * 255)
+        let green = Int(g * 255)
+        let blue = Int(b * 255)
+
+        send(label: "Color") {
+            try await self.service.setColor(r: red, g: green, b: blue)
         }
     }
 
@@ -48,7 +49,7 @@ final class LampViewModel: ObservableObject {
         guard onEditingEnded else { return }
         let value = intensity
         send(label: "Intensity \(Int(value * 100))%") {
-            try await service.setIntensity(value)
+            try await self.service.setIntensity(value)
         }
     }
 
